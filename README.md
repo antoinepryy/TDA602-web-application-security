@@ -88,6 +88,8 @@ Now we have our php file on the server, we can execute code remotely
 
 ![Request uname executed remotely](assets/uname-req.png)
 
+Note that webshell file belongs to mysql, but when we run the command `whoami` through the web application, it seems that we are logged as www-data user, which is the standard user that is often reserved for remote user of web apps in Apache, it has few rights on the system. But if we tweak a little our previous URL that writes php file, we could for example activate the SUID flag, and by setting our real ID based on the effective ID (as we've done in part 1, but this time through our PHP script) we could send commands using mysql user, which has advanced right on the system. 
+
 #### Countermeasures
 
 ##### Web Application
