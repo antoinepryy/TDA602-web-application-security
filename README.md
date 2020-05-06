@@ -85,20 +85,25 @@ Our file contain php code that will fetch the "cmd" parameter in our url, and ru
 Now we have our php file on the server, we can execute code remotely
 
 ![Request whoami executed remotely](assets/whoami-req.png)
+
 ![Request uname executed remotely](assets/uname-req.png)
 
 #### Countermeasures
 
 ##### Web Application
 
-- Sanitize url
+- Parameterised queries : MySQL supports parameterised queries, meaning instead of injecting values directly in the command, it uses inputs as parameters, that are then formatted by only acceptable values into the SQL statement.
+- Remove error messages : not the case in this app, but on some web servers if an error occurs it's sometimes thrown back to the client, allowing a potential attacker to gain some information that could help him break the system (like tables structure for example)
     
 ##### Database System
 
-- ?
+- Use the principle of least privilege : every web application on a server should have its own database account. Running an application using privileged users (as root, or mysql user) can be very harmful in this type of attack. Anything an administrator can do, so can an attacker. We have the case here by reading the passwd file.
+- An even more secure countermeasure would be, for each database account, to authorize only writing and reading the database, and forbid harmful actions like dropping tables.
+- Use stored procedures : extra layer of abstraction on your application, you can specify every action that are allowed on each table by creating prepared functions, and use them instead of requesting directly your database. ANy request which is not part of a procedure would be rejected because in a standard usage you would not need to do this action.
 
 ##### Operating System
-- Change permission on server. In server mostly recommended that directories permissions should 755 and files 644. In permissions 777 are not recommended due to security reasons.
+
+- Change permission on server. In server mostly recommended that directories permissions should 755 and files 644. In permissions 777 are not recommended due to security reasons. When we created the webshell, we used writing rights that were allowed in css folder, and are useless during normal execution so by removing this permission we would ensure that users can't write in this folder.
 
 
 
@@ -106,3 +111,4 @@ Now we have our php file on the server, we can execute code remotely
 ### Sources
 
 1. [Sécurisez vos cookies (instructions Secure et HttpOnly)](https://blog.dareboost.com/fr/2016/12/securisez-cookies-instructions-secure-httponly/)
+2. [SQL Injection Attacks and Some Tips on How to Prevent Them](https://www.codeproject.com/Articles/9378/SQL-Injection-Attacks-and-Some-Tips-on-How-to-Prev)
