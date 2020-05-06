@@ -20,7 +20,7 @@ When the administrator checks the comments page, the first source of the image w
 
 The thing is, the victim will only see that someone uploaded a picture of a dog because a backup url is used in the `onerror` attribute of the `<img/>` tag to prevent showing a broken image which could be suspicious.
 
-![Dog picture viewed by the administrator ](assets/dog-picture.png)
+![Dog picture viewed by the administrator ](assets/dog-picture.PNG)
 
 All we need then, to hijack the administator's session, is to replace the value of our `PHPSESSID`cookie, in the dev tools of the web browser, by the value set in the administrator's cookie.
 
