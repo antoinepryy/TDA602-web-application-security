@@ -40,6 +40,9 @@ We can add escaping/encoding functions in the back-end source code to prevent sp
 Disable javascript code execution option in the web browser:
 It is possible in modern web browsers to disable javascript code execution when visiting a web page. This would prevent cookie stealing attacks but some websites need javascript to work properly, so it can't be a solution on the long run.
 
+Install Web browser extensions:
+It is possible to install plugins like Firefox NoScript, among many others, to specify the websites that should be trusted by the browser to execute scripts.
+
 ##### Server-side
 
 HttpOnly flag: 
@@ -50,6 +53,20 @@ The thing is, we also need to switch to an HTTPS communication protocol between 
 Use escaping/encoding functions:
 Another thing that could be done is to encode HTML entites in the user's inputs like `>` to `&gt;`, `<` to `&lt;` and quotes like `'` and `"` respectively to `&#x27;` and `&quot;`.
 In PHP for exemple, we can use functions like `htmlentities()` or `htmlspecialchars()` to escape all special charaters that could be used to inject code in the input fields.
+
+
+Use Content Security Policy (CSP):
+A CSP could also be useful to prevent the execution of potential XSS scripts. By specifiying an HTTP `Content-Security-Policy` header in the responses from the web server, we can, for exemple, specify to the web browser of the client to only load content from specific sources.
+If we specify `Content-Security-Policy: script-src 'self'; img-src *` in the HTTP header of the responses, we can indicate to the web browser to only load scripts from the same origin (domain) as the rest of the web page, but accept to load any image from any other source for exemple.
+In a way, it is also a client-side countermeasure because the web browser needs to be CSP compatible for the rules to take effect and for it to execute only the scripts from an authorized origin.
+
+
+Use Iframe protection mechanisms:
+One possible type of attack that could be used by a malicious individual is to load the web page into an iframe HTML tag of his own evil website and try to steal informations from clients visiting it without them even being aware that they are not on the right website.
+To prevent this possibility from happening, Javascript-based Frame busters could be implemented to block the display of the web page in case of Framing by another website. It is also possible to use the header `X-Frame-Options` in the HTTP responses to specify that a web page shouldn't be loaded inside an iframe tag of another website.
+In this case, a warning message appears in the Framed loaded web page to warn the client.
+For exemple, if we specify `X-Frame-Options: DENY` as value for the header, no website could be able to Frame the web page without warning the client.
+The X-Frame-Options countermeasure is, as for the CSP countermeasure, a bit client-sided because the client's web browser needs to be X-Frame-Options compatible for it to work.
 
 ### Part 2: SQL Injection
 
@@ -118,3 +135,5 @@ Note that the webshell file belongs to mysql, but when we run the command `whoam
 
 1. [Sécurisez vos cookies (instructions Secure et HttpOnly)](https://blog.dareboost.com/fr/2016/12/securisez-cookies-instructions-secure-httponly/)
 2. [SQL Injection Attacks and Some Tips on How to Prevent Them](https://www.codeproject.com/Articles/9378/SQL-Injection-Attacks-and-Some-Tips-on-How-to-Prev)
+3. [Content Security Policy (CSP), MDN Web Docs Mozilla](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+4. [How to Prevent Framing Attacks, Hackmanit](https://www.hackmanit.de/en/blog-en/81-how-to-prevent-framing-attacks)
